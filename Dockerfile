@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM tensorflow/tensorflow:2.5.0-gpu
 
 
 
@@ -18,9 +18,11 @@ RUN python -m pip install --user -U pip
 
 
 COPY --chown=algorithm:algorithm requirements.txt /opt/algorithm/
-RUN python -m pip install --user -rrequirements.txt
+RUN python -m pip install --user -r requirements.txt
 
 COPY --chown=algorithm:algorithm process.py /opt/algorithm/
+COPY --chown=algorithm:algorithm model_weights_findpvs.h5 /opt/algorithm/
+COPY --chown=algorithm:algorithm model_architecture_findpvs.json /opt/algorithm/
 
 ENTRYPOINT python -m process $0 $@
 
@@ -34,7 +36,5 @@ LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.count=2
 LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.capabilities=()
 LABEL nl.diagnijmegen.rse.algorithm.hardware.memory=10G
 LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.count=1
-LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.cuda_compute_capability=
+LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.cuda_compute_capability=()
 LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.memory=8G
-
-
