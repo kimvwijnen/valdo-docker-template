@@ -2,14 +2,14 @@
     {
         "outputs": [
             {
-                "type": "metaio_image",
-                "filename": "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
+                "type": "NIftI",
+                "filename": "sub-201_space-T1_desc-masked_T2.nii.gz"
             }
         ],
         "inputs": [
             {
-                "type": "metaio_image",
-                "filename": "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
+                "type": "NIftI",
+                "filename": "sub-201_space-T1_desc-masked_T2.nii.gz"
             }
         ],
         "error_messages": []
