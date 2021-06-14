@@ -38,6 +38,31 @@ class Findpvs(SegmentationAlgorithm):
 
         print("==> Weights loaded")
 
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Segment nodule candidates
+        segmented_nodules = self.predict(input_image=input_image)
+
+        # Write resulting segmentation to output location
+        output_name = Path(input_image_file_path.name.split("desc-masked_")[0] + "desc-prediction.nii.gz")
+        segmentation_path = self._output_path / output_name
+        if not self._output_path.exists():
+            self._output_path.mkdir()
+        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
+
+        # Write segmentation file path to result.json for this case
+        return {
+            "outputs": [
+                dict(type="metaio_image", filename=segmentation_path.name)
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
     def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
 
         # image to numpy array
