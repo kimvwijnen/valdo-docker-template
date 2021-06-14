@@ -3,10 +3,7 @@ import SimpleITK
 import numpy as np
 
 from evalutils import SegmentationAlgorithm
-from evalutils.validators import (
-    UniquePathIndicesValidator,
-    UniqueImagesValidator,
-)
+from evalutils.validators import UniqueImagesValidator
 
 # added imports
 import tensorflow as tf
@@ -15,7 +12,6 @@ from pathlib import Path
 import re
 
 from evalutils.io import (ImageLoader, SimpleITKLoader)
-from evalutils.validators import DataFrameValidator, UniqueImagesValidator
 
 
 class Findpvs(SegmentationAlgorithm):
@@ -23,18 +19,13 @@ class Findpvs(SegmentationAlgorithm):
         self.input_modalities = ['T1', 'T2', 'FLAIR']
         self.first_modality = self.input_modalities[0]
         super().__init__(
-            validators=dict(
-                input_image=(
-                    UniqueImagesValidator(),
-                    UniquePathIndicesValidator(),
-                )
-            ),
-            # indicate with regex which image to load as input, e.g. T1 scan
+            # (Skip UniquePathIndicesValidator, because this will error when there are multiple images
+            # for the same subject)
+            validators=dict(input_image=(UniqueImagesValidator(),)),
+            # Indicate with regex which image to load as input, e.g. T1 scan
             file_filters={'input_image':
                           re.compile("/input/sub-.*_space-.*_desc-masked_%s.nii.gz" % self.first_modality)}
         )
-        # Skip UniquePathIndicesValidator, because this will error when there are multiple images for the same subject
-        self._validators: Dict[str, Tuple[DataFrameValidator, ...]] = (dict(input_image=(UniqueImagesValidator(),)))
 
         print("==> Initializing model")
 
@@ -51,7 +42,7 @@ class Findpvs(SegmentationAlgorithm):
 
         print("==> Weights loaded")
 
-    def _load_input_image(self, *, case) -> Tuple[List[SimpleITK.Image], Path]:
+    def _load_input_image(self, *, case) -> Tuple[List[SimpleITK.Image], List[Path]]:
         input_image_file_path = case["path"]
 
         input_image_file_loader = self._file_loaders["input_image"]
@@ -60,13 +51,7 @@ class Findpvs(SegmentationAlgorithm):
                 "The used FileLoader was not of subclass ImageLoader"
             )
         input_images = []
-
-        # input_image = input_image_file_loader.load_image(input_image_file_path)
-        # input_images.append(input_image)
-
-        # add_image_path = input_image_file_path.parent / Path(input_image_file_path.name.replace('T1.nii.gz',
-        #                                                                                         'FLAIR.nii.gz'))
-        # input_images.append(input_image_file_loader.load_image(add_image_path))
+        input_path_list = []
 
         # Load the image(s) for this case
         for modality in self.input_modalities:
@@ -74,41 +59,44 @@ class Findpvs(SegmentationAlgorithm):
             scan_name = Path(input_image_file_path.name.replace('%s.nii.gz' % self.first_modality,
                                                                 '%s.nii.gz' % modality))
             modality_path = input_image_file_path.parent / scan_name
-            print(modality_path)
             input_images.append(input_image_file_loader.load_image(modality_path))
+            input_path_list.append(modality_path)
 
         # Check that it is the expected image
         if input_image_file_loader.hash_image(input_images[0]) != case["hash"]:
             raise RuntimeError("Image hashes do not match")
 
-        return input_images, input_image_file_path
+        return input_images, input_path_list
 
     def process_case(self, *, idx, case):
         # Load and test the image for this case
-        input_images, input_image_file_path = self._load_input_image(case=case)
+        input_images, input_path_list = self._load_input_image(case=case)
 
         # Segment case
         segm_prediction = self.predict(input_images=input_images)
 
         # Write resulting segmentation to output location
-        output_name = Path(input_image_file_path.name.split("desc-masked_")[0] + "desc-prediction.nii.gz")
+        output_name = Path(input_path_list[0].name.split("desc-masked_")[0] + "desc-prediction.nii.gz")
         segmentation_path = self._output_path / output_name
         if not self._output_path.exists():
             self._output_path.mkdir()
         SimpleITK.WriteImage(segm_prediction, str(segmentation_path), True)
 
+        input_name_list = [p.name for p in input_path_list]
         # Write segmentation file path to result.json for this case
         return {
             "outputs": [
                 dict(type="metaio_image", filename=segmentation_path.name)
             ],
             "inputs": [
-                dict(type="metaio_image", filename=input_image_file_path.name)
+                dict(type="metaio_image", filename=input_name_list)
             ],
             "error_messages": [],
         }
 
     def predict(self, *, input_images: List[SimpleITK.Image]) -> SimpleITK.Image:
+        print("==> Running prediction")
+
         input_list = []
 
         for img in input_images:
