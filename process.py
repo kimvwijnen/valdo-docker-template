@@ -111,7 +111,7 @@ class TeamName(SegmentationAlgorithm):
             "error_messages": [],
         }
 
-    def predict(self, *, input_images: List[SimpleITK.Image]) -> SimpleITK.Image:
+    def predict(self, *, input_images: List[SimpleITK.Image]) -> List[SimpleITK.Image]:
         print("==> Running prediction")
 
         # TODO add code to apply method to input image and output a prediction (and an uncertainty map for task 3 lac)
