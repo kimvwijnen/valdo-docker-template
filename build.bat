@@ -1,1 +1,1 @@
-docker build -t findpvs .
+docker build -t teamname .

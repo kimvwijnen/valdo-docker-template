@@ -6,8 +6,8 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
 docker run --rm --runtime nvidia --memory=10g --gpus="device=0" \
        -v ${SCRIPTPATH}/test/:/input/ -v ${SCRIPTPATH}/output/:/output/ \
-       -u $UID:$GROUPS findpvs
-       #TODO change findpvs with teamname
+       -u $UID:$GROUPS teamname
+       #TODO change teamname to actual teamname
 
 docker run --rm \
         -v ${SCRIPTPATH}/output/:/output/ \

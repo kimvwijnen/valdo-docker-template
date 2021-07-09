@@ -1,3 +1,3 @@
 call .\build.bat
 
-docker save findpvs > FindPVS.tar
+docker save teamname > teamname.tar

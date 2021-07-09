@@ -2,4 +2,6 @@
 
 ./build.sh
 
-docker save findpvs | gzip -c > FindPVS.tar.gz
+#TODO change teamname to actual teamname
+
+docker save teamname | gzip -c > teamname.tar.gz
