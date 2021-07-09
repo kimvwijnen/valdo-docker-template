@@ -16,8 +16,13 @@ from evalutils.io import (ImageLoader, SimpleITKLoader)
 
 class Findpvs(SegmentationAlgorithm):
     def __init__(self):
+        # TODO change to required input modalities for your method
         self.input_modalities = ['T1', 'T2', 'FLAIR']
         self.first_modality = self.input_modalities[0]
+
+        # TODO indicate if uncertainty map should be saved
+        self.flag_save_uncertainty = False
+
         super().__init__(
             # (Skip UniquePathIndicesValidator, because this will error when there are multiple images
             # for the same subject)
@@ -30,8 +35,9 @@ class Findpvs(SegmentationAlgorithm):
         print("==> Initializing model")
 
         # --> Load model
-        weights_path = "/opt/algorithm/model_weights_findpvs.h5"
-        architecture_path = "/opt/algorithm/model_architecture_findpvs.json"
+        # TODO add code to load model
+        weights_path = "/home/model_weights_findpvs.h5"
+        architecture_path = "/home/model_architecture_findpvs.json"
 
         json_file = open(architecture_path, 'r')
         unet_layers = json_file.read()
@@ -73,20 +79,39 @@ class Findpvs(SegmentationAlgorithm):
         input_images, input_path_list = self._load_input_image(case=case)
 
         # Segment case
-        segm_prediction = self.predict(input_images=input_images)
+        list_results = self.predict(input_images=input_images)
+
+        if self.flag_save_uncertainty:
+            assert len(list_results) == 2, "Error, predict function should return a list containing 2 images, " \
+                                           "the predicted segmentation and the predicted uncertainty map. " \
+                                           "Or change flag_save_uncertainty to False"
+        else:
+            assert len(list_results) == 1, "Error, predict function should return a list containing 1 image, " \
+                                           "only the predicted segmentation. " \
+                                           "Or change flag_save_uncertainty to True"
+
 
         # Write resulting segmentation to output location
-        output_name = Path(input_path_list[0].name.split("desc-masked_")[0] + "desc-prediction.nii.gz")
-        segmentation_path = self._output_path / output_name
         if not self._output_path.exists():
             self._output_path.mkdir()
-        SimpleITK.WriteImage(segm_prediction, str(segmentation_path), True)
+
+        save_description = ['prediction', 'uncertaintymap']
+        output_path_list = []
+
+        for i, outimg in enumerate(list_results):
+            output_name = Path(input_path_list[0].name.split("desc-masked_")[0] + "%s.nii.gz" % save_description[i])
+            segmentation_path = self._output_path / output_name
+            print(segmentation_path)
+            output_path_list.append(segmentation_path)
+            SimpleITK.WriteImage(outimg, str(segmentation_path), True)
 
         input_name_list = [p.name for p in input_path_list]
+        output_name_list = [p.name for p in output_path_list]
+
         # Write segmentation file path to result.json for this case
         return {
             "outputs": [
-                dict(type="metaio_image", filename=segmentation_path.name)
+                dict(type="metaio_image", filename=output_name_list)
             ],
             "inputs": [
                 dict(type="metaio_image", filename=input_name_list)
@@ -96,6 +121,8 @@ class Findpvs(SegmentationAlgorithm):
 
     def predict(self, *, input_images: List[SimpleITK.Image]) -> SimpleITK.Image:
         print("==> Running prediction")
+
+        # TODO add code to apply method to input image and output prediction
 
         input_list = []
 
@@ -132,16 +159,29 @@ class Findpvs(SegmentationAlgorithm):
 
         # --> Postproc prediction
         # convert numpy array to SimpleITK image again for saving
-        out = np.moveaxis(out, [0, 2], [2, 0])
-        print('Image shape before saving:')
-        print(out.shape)
-        out = SimpleITK.GetImageFromArray(out)
-        out.CopyInformation(input_images[0])
+        out_list = []
+
+        # TODO change, see comments
+        out_images = [out]
+        #  For Task 1 PVS or Task 2 MB: list should contain only the predicted segmentation: [out]
+        # out_images = [pred]
+        #  For Task 3 Lacunes: list should contain the predicted segmentation and the uncertainty map (in that order!)
+        # out_images = [pred, uncertaintymap]
+
+        for outimg in out_images:
+            outimg = np.moveaxis(outimg, [0, 2], [2, 0])
+            print('Image shape before saving:')
+            print(outimg.shape)
+            out_itk = SimpleITK.GetImageFromArray(outimg)
+            out_itk.CopyInformation(input_images[0])
+            assert len(out_itk.GetSize()) == len(input_images[0].GetSize()), "Error, output image should have the" \
+                                                                             " same shape as the input image(s)!"
+            out_list.append(out_itk)
 
         print("==> Prediction done")
         # Prediction is saved in superclass SegmentationAlgorithm, in the process_case function
 
-        return out
+        return out_list
 
 
 if __name__ == "__main__":
