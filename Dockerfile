@@ -1,37 +1,32 @@
 FROM tensorflow/tensorflow:2.5.0-gpu
+#TODO change base docker image
+# Syntax: # FROM [base_image]
+
+RUN mkdir -p /home
+
+WORKDIR /home
+
+RUN python -m pip install -U pip
 
 
+COPY requirements.txt /home/
+RUN python -m pip install -r requirements.txt
 
-RUN groupadd -r algorithm && useradd -m --no-log-init -r -g algorithm algorithm
-
-RUN mkdir -p /opt/algorithm /input /output \
-    && chown algorithm:algorithm /opt/algorithm /input /output
-
-USER algorithm
-
-WORKDIR /opt/algorithm
-
-ENV PATH="/home/algorithm/.local/bin:${PATH}"
-
-RUN python -m pip install --user -U pip
-
-
-
-COPY --chown=algorithm:algorithm requirements.txt /opt/algorithm/
-RUN python -m pip install --user -r requirements.txt
-
-COPY --chown=algorithm:algorithm process.py /opt/algorithm/
-COPY --chown=algorithm:algorithm model_weights_findpvs.h5 /opt/algorithm/
-COPY --chown=algorithm:algorithm model_architecture_findpvs.json /opt/algorithm/
+COPY process.py /home/
+#TODO copy method components into docker
+COPY model_weights_findpvs.h5 /home/
+COPY model_architecture_findpvs.json /home/
 
 ENTRYPOINT python -m process $0 $@
 
 ## ALGORITHM LABELS ##
 
 # These labels are required
+#TODO change FindPVS to teamname
 LABEL nl.diagnijmegen.rse.algorithm.name=FindPVS
 
 # These labels are required and describe what kind of hardware your algorithm requires to run.
+#TODO check that this has the right information (can generate this with evalutils)
 LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.count=2
 LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.capabilities=()
 LABEL nl.diagnijmegen.rse.algorithm.hardware.memory=10G
