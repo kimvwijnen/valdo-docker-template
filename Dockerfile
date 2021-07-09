@@ -22,6 +22,7 @@ ENTRYPOINT python -m process $0 $@
 ## ALGORITHM LABELS ##
 
 # These labels are required
+#TODO change FindPVS to teamname
 LABEL nl.diagnijmegen.rse.algorithm.name=FindPVS
 
 # These labels are required and describe what kind of hardware your algorithm requires to run.
