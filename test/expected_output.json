@@ -1,0 +1,17 @@
+[
+    {
+        "outputs": [
+            {
+                "type": "metaio_image",
+                "filename": [""]
+            }
+        ],
+        "inputs": [
+            {
+                "type": "metaio_image",
+                "filename": [""]
+            }
+        ],
+        "error_messages": []
+    }
+]
