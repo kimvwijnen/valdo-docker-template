@@ -14,11 +14,11 @@ import re
 from evalutils.io import (ImageLoader, SimpleITKLoader)
 
 
+# TODO change teamname to actual teamname
 class Findpvs(SegmentationAlgorithm):
     def __init__(self):
         # TODO change to required input modalities for your method
         self.input_modalities = ['T1', 'T2', 'FLAIR']
-        self.first_modality = self.input_modalities[0]
 
         # TODO indicate if uncertainty map should be saved
         self.flag_save_uncertainty = False
@@ -31,6 +31,8 @@ class Findpvs(SegmentationAlgorithm):
             file_filters={'input_image':
                           re.compile("/input/sub-.*_space-.*_desc-masked_%s.nii.gz" % self.first_modality)}
         )
+
+        self.first_modality = self.input_modalities[0]
 
         print("==> Initializing model")
 
@@ -46,7 +48,7 @@ class Findpvs(SegmentationAlgorithm):
         self.model = tf.keras.models.model_from_json(unet_layers)
         self.model.load_weights(weights_path)
 
-        print("==> Weights loaded")
+        print("==> Model loaded")
 
     def _load_input_image(self, *, case) -> Tuple[List[SimpleITK.Image], List[Path]]:
         input_image_file_path = case["path"]
@@ -90,7 +92,6 @@ class Findpvs(SegmentationAlgorithm):
                                            "only the predicted segmentation. " \
                                            "Or change flag_save_uncertainty to True"
 
-
         # Write resulting segmentation to output location
         if not self._output_path.exists():
             self._output_path.mkdir()
@@ -122,7 +123,7 @@ class Findpvs(SegmentationAlgorithm):
     def predict(self, *, input_images: List[SimpleITK.Image]) -> SimpleITK.Image:
         print("==> Running prediction")
 
-        # TODO add code to apply method to input image and output prediction
+        # TODO add code to apply method to input image and output a prediction (and an uncertainty map for task 3 lac)
 
         input_list = []
 
@@ -179,10 +180,11 @@ class Findpvs(SegmentationAlgorithm):
             out_list.append(out_itk)
 
         print("==> Prediction done")
-        # Prediction is saved in superclass SegmentationAlgorithm, in the process_case function
 
+        # TODO Return a list with a prediction (and an uncertainty map for task 3 lac, the order is important!)
         return out_list
 
 
 if __name__ == "__main__":
+    # TODO change teamname to actual teamname
     Findpvs().process()
