@@ -13,7 +13,6 @@ docker run --rm \
         -v ${SCRIPTPATH}/output/:/output/ \
         -v ${SCRIPTPATH}/test/:/input/ \
         -u $UID:$GROUPS python:3.7-slim python -c "import json, sys; f1 = json.load(open('/output/results.json')); f2 = json.load(open('/input/expected_output.json')); sys.exit(f1 != f2);"
-        #TODO change findpvs with teamname
 
 if [ $? -eq 0 ]; then
     echo "Tests successfully passed..."
