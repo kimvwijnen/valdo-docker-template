@@ -19,7 +19,8 @@ class Findpvs(SegmentationAlgorithm):
     def __init__(self):
         # TODO change to required input modalities for your method
         self.input_modalities = ['T1', 'T2', 'FLAIR']
-
+        self.first_modality = self.input_modalities[0]
+        
         # TODO indicate if uncertainty map should be saved
         self.flag_save_uncertainty = False
 
@@ -31,8 +32,6 @@ class Findpvs(SegmentationAlgorithm):
             file_filters={'input_image':
                           re.compile("/input/sub-.*_space-.*_desc-masked_%s.nii.gz" % self.first_modality)}
         )
-
-        self.first_modality = self.input_modalities[0]
 
         print("==> Initializing model")
 
