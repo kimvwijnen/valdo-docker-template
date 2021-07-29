@@ -2,7 +2,7 @@ call ./build.bat
 
 docker run --rm --runtime nvidia --memory=10g --gpus="device=0"^
        -v %~dp0\test\:/input/ -v %~dp0\output\:/output/^
-       teamname
+       valdotorch
 
 docker run --rm^
  -v %~dp0\output\:/output/^

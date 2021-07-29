@@ -3,13 +3,16 @@
         "outputs": [
             {
                 "type": "metaio_image",
-                "filename": [""]
+                "filename": ["sub-201_space-T1_prediction.nii.gz"]
             }
         ],
         "inputs": [
             {
                 "type": "metaio_image",
-                "filename": [""]
+                "filename": [
+                    "sub-201_space-T1_desc-masked_T1.nii.gz",
+                    "sub-201_space-T1_desc-masked_T2.nii.gz",
+                    "sub-201_space-T1_desc-masked_FLAIR.nii.gz"]
             }
         ],
         "error_messages": []

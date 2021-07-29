@@ -4,4 +4,4 @@
 
 #TODO change teamname to actual teamname
 
-docker save teamname | gzip -c > teamname.tar.gz
+docker save valdotorch | gzip -c > valdotorch.tar.gz

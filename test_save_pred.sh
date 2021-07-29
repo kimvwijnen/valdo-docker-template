@@ -6,7 +6,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
 docker run --rm --runtime nvidia --memory=10g --gpus="device=0" \
        -v ${SCRIPTPATH}/test/:/input/ -v ${SCRIPTPATH}/output/:/output/ \
-       -u $UID:$GROUPS teamname
+       -u $UID:$GROUPS valdotorch
        #TODO change teamname to actual teamname
        #TODO if your method does not need a gpu, remove --gpus="device=0". If it does need a gpu, make sure you installed the nvidia container toolkit before running your docker (see: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 

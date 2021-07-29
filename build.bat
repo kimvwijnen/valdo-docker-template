@@ -1,1 +1,1 @@
-docker build -t teamname .
+docker build -t valdotorch .

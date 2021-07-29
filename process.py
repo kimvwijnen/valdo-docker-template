@@ -6,23 +6,27 @@ from evalutils import SegmentationAlgorithm
 from evalutils.validators import UniqueImagesValidator
 
 # added imports
-import tensorflow as tf
 from typing import Tuple, List
 from pathlib import Path
 import re
+#TODO add imports
+import torch
+import monai
+from scipy.special import expit
+from skimage import transform
 
 from evalutils.io import (ImageLoader, SimpleITKLoader)
 
 
 # TODO change teamname to actual teamname
-class TeamName(SegmentationAlgorithm):
+class ValdoTorch(SegmentationAlgorithm):
     def __init__(self):
         # TODO change to required input modalities for your method
-        self.input_modalities = [None]
+        self.input_modalities = ['T1', 'T2', 'FLAIR']
         self.first_modality = self.input_modalities[0]
 
         # TODO indicate if uncertainty map should be saved
-        self.flag_save_uncertainty = None
+        self.flag_save_uncertainty = False
 
         super().__init__(
             # (Skip UniquePathIndicesValidator, because this will error when there are multiple images
@@ -33,11 +37,28 @@ class TeamName(SegmentationAlgorithm):
                           re.compile("/input/sub-.*_space-.*_desc-masked_%s.nii.gz" % self.first_modality)}
         )
 
+        # use GPU if available, otherwise use the CPU
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        print("==> Using ", self.device)
         print("==> Initializing model")
 
         # --> Load model
         # TODO add code to load model
+
+        # define the U-Net with monai
+        self.model = monai.networks.nets.UNet(
+            dimensions=3,
+            in_channels=3,
+            out_channels=1,
+            channels=(16, 32, 64, 128, 256),
+            strides=(2, 2, 2, 2),
+            num_res_units=2,
+        ).to(self.device)
+
+        # set to inference mode
+        self.model.eval()
+        #TODO load in pytorch weights
 
         print("==> Model loaded")
 
@@ -116,12 +137,68 @@ class TeamName(SegmentationAlgorithm):
 
         # TODO add code to apply method to input image and output a prediction (and an uncertainty map for task 3 lac)
 
+        input_list = []
+        # img = input_images[0] # if method only uses 1 modality do not need loop
+        for img in input_images:
+            # image to numpy array
+            image = SimpleITK.GetArrayFromImage(img)
+            print('Image shape:')
+            print(image.shape)
+
+            # --> Preprocess image
+            image = np.array(image, dtype=np.float32)
+
+            # normalize image (rescale)
+            min_data = np.amin(image)
+            max_data = np.amax(image)
+            image = (image - min_data) * 1. / (max_data - min_data)
+
+            image = transform.resize(image, (512, 512, 192), order=3)  # resize all images to 512 x 512 x 192 in shape
+            # convert (z,y,x) to (x,y,z) (simpleitk uses different axes order than numpy)
+            image = np.moveaxis(image, [0, 2], [2, 0])
+            print('Image shape after conversion:')
+            print(image.shape)
+            input_list.append(image)
+
+        # concatenate images
+        input_channels = np.concatenate(input_list, axis=0)
+        # add batch axis and channel axis (at front for pytorch)
+        image = torch.from_numpy(image).to(self.device).reshape(1, 3, 512, 512, 192)
+
+        # --> Apply NN on image
+        # Do the forward pass
+        out = self.model(image).squeeze().data.cpu().numpy()
+        print('Image shape prediction:')
+        print(out.shape)
+
+        # --> Postproc prediction
+        # convert numpy array to SimpleITK image again for saving
+        out_list = []
+
+        # TODO change, see comments
+        out_images = [out]
+        #  For Task 1 PVS or Task 2 MB: list should contain only the predicted segmentation: [out]
+        # out_images = [pred]
+        #  For Task 3 Lacunes: list should contain the predicted segmentation and the uncertainty map (in that order!)
+        # out_images = [pred, uncertaintymap]
+
+        for outimg in out_images:
+            outimg = np.moveaxis(outimg, [0, 2], [2, 0])
+            print('Image shape before saving:')
+            print(outimg.shape)
+            # Convert numpy array to SimpleITK image for eval utils framework
+            out_itk = SimpleITK.GetImageFromArray(outimg)
+            out_itk.CopyInformation(input_images[0])
+            assert len(out_itk.GetSize()) == len(input_images[0].GetSize()), "Error, output image should have the" \
+                                                                             " same shape as the input image(s)!"
+            out_list.append(out_itk)
+
         print("==> Prediction done")
 
         # TODO Return a list with a prediction (and an uncertainty map for task 3 lac, the order is important!)
-        return None
+        return out_list
 
 
 if __name__ == "__main__":
     # TODO change teamname to actual teamname
-    TeamName().process()
+    ValdoTorch().process()
