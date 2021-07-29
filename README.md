@@ -4,7 +4,9 @@ Template for the [Where is VALDO challenge](https://valdo.grand-challenge.org/)
 
 For a description of how to prepare your submission see the [Prepare Docker page](https://valdo.grand-challenge.org/Docker/)
 
-For an example version see the [example_valdo branch](https://github.com/kimvwijnen/valdo-docker-template/tree/example_valdo)
+For an example version see:
+- The [example_valdo branch](https://github.com/kimvwijnen/valdo-docker-template/tree/example_valdo) for a TensorFlow/Keras example
+- The [example_pytorch branch](https://github.com/kimvwijnen/valdo-docker-template/tree/example_pytorch) for a PyTorch example
 
 
 # Prepare submission
