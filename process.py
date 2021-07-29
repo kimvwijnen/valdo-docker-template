@@ -6,10 +6,10 @@ from evalutils import SegmentationAlgorithm
 from evalutils.validators import UniqueImagesValidator
 
 # added imports
-import tensorflow as tf
 from typing import Tuple, List
 from pathlib import Path
 import re
+#TODO add imports
 
 from evalutils.io import (ImageLoader, SimpleITKLoader)
 
